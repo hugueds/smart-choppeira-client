@@ -8,9 +8,6 @@ const deviceId = process.env.DEVICE_ID || 0;
 const broker = process.env.BROKER || 'mqtt://192.168.0.4';
 const client = mqtt.connect(broker);
 
-let startCounter = true;
-let pulseCounter = 0;
-
 // Fazer requisição dos dados do device no servidor
 // Deixar dados padrao salvos em texto
 
@@ -24,14 +21,13 @@ const sensorPin = parseInt(process.env.SENSOR_PIN, 10);
 const solenoidPin = parseInt(process.env.SOLENOID_PIN, 10);
 
 gpio.setMode(gpio.MODE_BCM);
-
 gpio.setup(sensorPin, gpio.DIR_IN, gpio.EDGE_RISING);
 gpio.setup(solenoidPin, gpio.DIR_OUT);
 
 gpio.on('change', function(channel, value) {
-    switch(channel) {
-        case sensorPin: countPulse(value); break;
-    }  
+    console.log('Channel ' + channel + ' value is now ' + value);
+    // client.publish('flowsensor/' + deviceId, rnd);
+    // enviar para mqtt cada vez que o sensor mudar o estado
 });
 
 const sensorSimulator = () => {
@@ -67,30 +63,11 @@ rl.on('line', (input) => {
     }
 });
 
-setInterval(function() { 
-    if (pulseCounter > 0){
-        let flow =  roundToThree(pulseCounter /(60 * 7.5));
-        client.publish('flowsensor/' + deviceId, flow.toString());
-        console.log('Total de pulsos é: ' + pulseCounter);        
-        console.log('O fluxo é de '+ flow + ' litros por segundo');
-    }        
-    pulseCounter = 0;
-}, 1000);
-
-function countPulse(value) {    
-    if (value)
-	    pulseCounter += 1;
+function startSimulation() {
+    setInterval(sensorSimulator, delay);
 }
 
-function roundToThree(num) {    
-    return +(Math.round(num + "e+3")  + "e-3");
-}
-
-// function startSimulation() {
-//     setInterval(sensorSimulator, delay);
-// }
-
-// startSimulation();
+startSimulation();
 
 
 
